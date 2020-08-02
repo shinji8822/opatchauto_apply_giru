@@ -28,11 +28,19 @@ upd_op () {
 }
 
 unzip_ru () {
-	[ ! -e ${WORKDIR}/RU/${GIRU} ] && ssh grid@${1} unzip -q ${WORKDIR}/RU/p${GIRU}*zip -d ${WORKDIR}/RU
+	ssh grid@${1} [ ! -d ${WORKDIR}/RU/${GIRU} ] && ssh grid@${1} unzip -q -o ${WORKDIR}/RU/p${GIRU}*zip -d ${WORKDIR}/RU
+}
+
+systemspace_check () {
+	ssh ${1}@${2} rm -f /tmp/patch_list_gihome.txt /tmp/systemspace_result.txt
+	ssh ${1}@${2} ls -d /opt/media/RU/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> /tmp/patch_list_gihome.txt
+	ssh ${1}@${2} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile /tmp/patch_list_gihome.txt \> /tmp/systemspace_result.txt
+	ssh ${1}@${2} grep checkSystemSpace /tmp/systemspace_result.txt \|awk '{print\ \$3}'
 }
 
 apply_ru () {
 	ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/RU/${GIRU}
+	echo $?
 }
 
 # Upgrade OPatch Module
@@ -53,10 +61,19 @@ done
 # Unzip RU Zipfile
 unzip_ru ${NODE1}
 
+# SystemSpace Check
+for node in ${NODE1} ${NODE2};do
+	for user in ${GIUSER};do
+		result=$(systemspace_check ${user} ${node})
+		[ "$result" == "passed." ] || exit 1
+	done
+done
+
 # ApplyRU
-#for node in ${NODE1} ${NODE2};do
-#	for user in ${GIUSER} ${DBUSER};do
-#		apply_ru ${node} 		
-#	done
-#done
+for node in ${NODE1} ${NODE2};do
+	for user in ${GIUSER} ${DBUSER};do
+		result=$(apply_ru ${node})
+		#[ "$result" != "0" ] || exit 1
+	done
+done
 
