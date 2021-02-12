@@ -9,9 +9,11 @@ cd /opt/media/RU;sh opatch_apply_ru.sh
 
 
 # Workaround for the error that occurs when 30899722 is applied to node2
-## copy inventory files from node1
+## copy inventory files from node1 (USER:grid)
 scp -r node1:/u01/app/19.0.0/grid/inventory/oneoffs/308* /u01/app/19.0.0/grid/inventory/oneoffs/
-## change owner 
+## change owner (USER:root)
 chown grid /u01/app/oraInventory/ContentsXML/oui-patch.xml
-## change permission
+## change permission (USER:root)
 chmod 660 /u01/app/oraInventory/ContentsXML/oui-patch.xml
+## resume(USER:root)
+/u01/app/19.0.0/grid/OPatch/opatchauto resume
