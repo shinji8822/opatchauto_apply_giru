@@ -8,7 +8,7 @@ NODE1=192.168.56.101
 NODE2=192.168.56.102
 GIUSER=grid
 DBUSER=oracle
-WORKDIR=/opt/media
+WORKDIR=/opt/media/RU
 
 #GI_OP_VER=$(ssh grid@${NODE1}  ${GI_HOME}/OPatch/opatch version|grep "OPatch Version:"|awk -F': ' '{print $2}')
 #echo $GI_OP_VER
@@ -17,63 +17,72 @@ WORKDIR=/opt/media
 
 
 get_op_ver () {
-	ssh ${1}@${2} ${3}/OPatch/opatch version|grep "OPatch Version:"|awk -F': ' '{print $2}'
+        ssh ${1}@${2} ${3}/OPatch/opatch version|grep "OPatch Version:"|awk -F': ' '{print $2}'
 }
 
 upd_op () {
-	[ "${1}" == "grid" ] &&	ssh root@${2} chmod g+w ${3}
-	ssh ${1}@${2} mv ${3}/OPatch ${3}/OPatch_${4}
-	ssh ${1}@${2} unzip -q ${WORKDIR}/RU/OPatch/${opatch_latest_version}/p6880880*Linux-x86-64.zip -d ${3}
-	[ "${1}" == "grid" ] && ssh root@${2} chmod g-w ${3}
+        [ "${1}" == "grid" ] && ssh root@${2} chmod g+w ${3}
+        ssh ${1}@${2} mv ${3}/OPatch ${3}/OPatch_${4}
+        ssh ${1}@${2} unzip -q ${WORKDIR}/OPatch/${opatch_latest_version}/p6880880*Linux-x86-64.zip -d ${3}
+        [ "${1}" == "grid" ] && ssh root@${2} chmod g-w ${3}
 }
 
 unzip_ru () {
-	ssh grid@${1} [ ! -d ${WORKDIR}/RU/${GIRU} ] && ssh grid@${1} unzip -q -o ${WORKDIR}/RU/p${GIRU}*zip -d ${WORKDIR}/RU
+        ssh grid@${1} [ ! -d ${WORKDIR}/${GIRU} ] && ssh grid@${1} unzip -q -o ${WORKDIR}/p${GIRU}*zip -d ${WORKDIR}
 }
 
 systemspace_check () {
-	ssh ${1}@${2} rm -f /tmp/patch_list_gihome.txt /tmp/systemspace_result.txt
-	ssh ${1}@${2} ls -d /opt/media/RU/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> /tmp/patch_list_gihome.txt
-	ssh ${1}@${2} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile /tmp/patch_list_gihome.txt \> /tmp/systemspace_result.txt
-	ssh ${1}@${2} grep checkSystemSpace /tmp/systemspace_result.txt \|awk '{print\ \$3}'
+        ssh ${1}@${2} rm -f /tmp/patch_list_gihome.txt /tmp/systemspace_result.txt
+        ssh ${1}@${2} ls -d /opt/media/RU/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> /tmp/patch_list_gihome.txt
+        ssh ${1}@${2} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile /tmp/patch_list_gihome.txt \> /tmp/systemspace_result.txt
+        ssh ${1}@${2} grep checkSystemSpace /tmp/systemspace_result.txt \|awk '{print\ \$3}'
 }
 
 apply_ru () {
-	ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/RU/${GIRU}
-	echo $?
+        ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/${GIRU}
+        echo $?
 }
 
 # Upgrade OPatch Module
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting Upgrade OPatch Module.
 for node in ${NODE1} ${NODE2};do
-	for user in ${GIUSER} ${DBUSER};do
-		[ "${user}" == "grid" ] && TARGET_HOME=${GI_HOME}
-		[ "${user}" == "oracle" ] && TARGET_HOME=${DB_HOME}
-		OP_VER_BEFORE=$(get_op_ver ${user} ${node} ${TARGET_HOME})
-		if [ "${OP_VER_BEFORE}" != "$opatch_latest_version" ]; then
-			upd_op ${user} ${node} ${TARGET_HOME} ${OP_VER_BEFORE}	
-		else
-			echo "Skipped updating OPatch."
-		fi
+        for user in ${GIUSER} ${DBUSER};do
+                [ "${user}" == "grid" ] && TARGET_HOME=${GI_HOME}
+                [ "${user}" == "oracle" ] && TARGET_HOME=${DB_HOME}
+                echo ${node} / ${user} / ${TARGET_HOME}
+                OP_VER_BEFORE=$(get_op_ver ${user} ${node} ${TARGET_HOME})
+                if [ "${OP_VER_BEFORE}" != "$opatch_latest_version" ]; then
+                        upd_op ${user} ${node} ${TARGET_HOME} ${OP_VER_BEFORE}
+                else
+                        echo "Skipped updating OPatch."
+                fi
 
-	done
+        done
 done
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished Upgrade OPatch Module.
 
 # Unzip RU Zipfile
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting Unzip RU Zipfile.
 unzip_ru ${NODE1}
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished Unzip RU Zipfile.
 
 # SystemSpace Check
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting SystemSpace Check.
 for node in ${NODE1} ${NODE2};do
-	for user in ${GIUSER};do
-		result=$(systemspace_check ${user} ${node})
-		[ "$result" == "passed." ] || exit 1
-	done
+        for user in ${GIUSER};do
+                result=$(systemspace_check ${user} ${node})
+                [ "$result" == "passed." ] || exit 1
+        done
 done
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished SystemSpace Check.
 
 # ApplyRU
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting ApplyRU.
 for node in ${NODE1} ${NODE2};do
-	for user in ${GIUSER} ${DBUSER};do
-		result=$(apply_ru ${node})
-		#[ "$result" != "0" ] || exit 1
-	done
+        for user in ${GIUSER} ${DBUSER};do
+                echo ${node} / ${user}
+                result=$(apply_ru ${node})
+                [ "$result" != "0" ] && echo "OK"|| echo "NG"
+        done
 done
-
+echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished ApplyRU.
