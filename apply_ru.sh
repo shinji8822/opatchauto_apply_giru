@@ -32,14 +32,14 @@ unzip_ru () {
 }
 
 systemspace_check () {
-        ssh ${1}@${2} rm -f /tmp/patch_list_gihome.txt /tmp/systemspace_result.txt
-        ssh ${1}@${2} ls -d /opt/media/RU/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> /tmp/patch_list_gihome.txt
-        ssh ${1}@${2} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile /tmp/patch_list_gihome.txt \> /tmp/systemspace_result.txt
-        ssh ${1}@${2} grep checkSystemSpace /tmp/systemspace_result.txt \|awk '{print\ \$3}'
+        ssh ${1}@${2} rm -f ${WORKDIR}/patch_list_gihome.txt ${WORKDIR}/systemspace_result.txt
+        ssh ${1}@${2} ls -d ${WORKDIR}/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> ${WORKDIR}/patch_list_gihome.txt
+        ssh ${1}@${2} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile ${WORKDIR}/patch_list_gihome.txt \> ${WORKDIR}/systemspace_result.txt
+        ssh ${1}@${2} grep checkSystemSpace ${WORKDIR}/systemspace_result.txt \|awk '{print\ \$3}'
 }
 
 apply_ru () {
-        ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/${GIRU}
+        ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/${GIRU}|tee -a ${WORKDIR}/apply_ru_$(hostname -s)_$(date +%Y%m%d_%H%M%S).log
         echo $?
 }
 
