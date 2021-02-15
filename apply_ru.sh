@@ -79,10 +79,8 @@ echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished SystemSpace Check.
 # ApplyRU
 echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting ApplyRU.
 for node in ${NODE1} ${NODE2};do
-        for user in ${GIUSER} ${DBUSER};do
-                echo ${node} / ${user}
-                result=$(apply_ru ${node})
-                [ "$result" != "0" ] && echo "OK"|| echo "NG"
-        done
+        echo ${node}
+        result=$(apply_ru ${node})
+        [ "$result" != "0" ] && echo "OK"|| echo "NG"
 done
 echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished ApplyRU.
