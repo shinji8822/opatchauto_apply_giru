@@ -1,1 +1,1 @@
-opatch_latest_version=12.2.0.1.21
+opatch_latest_version=12.2.0.1.23
