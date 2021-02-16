@@ -1,0 +1,32 @@
+get_op_ver () {
+        ssh ${1}@${2} ${3}/OPatch/opatch version|grep "OPatch Version:"|awk -F': ' '{print $2}'
+}
+
+upd_op () {
+        [ "${1}" == "grid" ] && ssh root@${2} chmod g+w ${3}
+        ssh ${1}@${2} mv ${3}/OPatch ${3}/OPatch_${4}
+        ssh ${1}@${2} unzip -q ${WORKDIR}/OPatch/${opatch_latest_version}/p6880880*Linux-x86-64.zip -d ${3}
+        [ "${1}" == "grid" ] && ssh root@${2} chmod g-w ${3}
+}
+
+unzip_ru () {
+        ssh grid@${1} [ ! -d ${WORKDIR}/${GIRU} ] && ssh grid@${1} unzip -q -o ${WORKDIR}/p${GIRU}*zip -d ${WORKDIR}
+}
+
+systemspace_check () {
+        USER=${1}
+        HOST=${2}
+        GIRU=${3}
+        GI_HOME=${4}
+        WORKDIR=${5}
+        ssh ${USER}@${HOST} rm -f ${WORKDIR}/patch_list_gihome.txt ${WORKDIR}/systemspace_result.txt
+        ssh ${USER}@${HOST} ls -d ${WORKDIR}/${GIRU}/[1-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9] \> ${WORKDIR}/patch_list_gihome.txt
+        ssh ${USER}@${HOST} ${GI_HOME}/OPatch/opatch prereq CheckSystemSpace -phBaseFile ${WORKDIR}/patch_list_gihome.txt \> ${WORKDIR}/systemspace_result.txt
+        ssh ${USER}@${HOST} grep checkSystemSpace ${WORKDIR}/systemspace_result.txt \|awk '{print\ \$3}'
+}
+
+apply_ru () {
+        ssh root@${1} ${GI_HOME}/OPatch/opatchauto apply ${WORKDIR}/${GIRU}|tee -a ${WORKDIR}/apply_ru_$(hostname -s)_$(date +%Y%m%d_%H%M%S).log
+        echo $?
+}
+
