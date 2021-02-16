@@ -48,7 +48,7 @@ echo $(date "+%Y-%m-%dT%H:%M:%S") : Finished SystemSpace Check.
 # ApplyRU
 echo $(date "+%Y-%m-%dT%H:%M:%S") : Starting ApplyRU.
 for node in ${NODE1} ${NODE2};do
-        echo ${node} 
+        echo "   Patching ${node}." 
         result=$(apply_ru ${node})
         if [ "$result" == "0" ]; then
            echo "${node} is OK."
