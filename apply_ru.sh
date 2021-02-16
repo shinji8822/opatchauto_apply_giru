@@ -15,7 +15,7 @@ for node in ${NODE1} ${NODE2};do
                 OP_VER_BEFORE=$(get_op_ver ${user} ${node} ${TARGET_HOME})
                 if [ "${OP_VER_BEFORE}" != "$opatch_latest_version" ]; then
                         upd_op ${user} ${node} ${TARGET_HOME} ${OP_VER_BEFORE}
-                        echo "      => OPatch Module Updated, OPatch Version is ${OP_VER_BEFORE}."
+                        echo "      => OPatch Version is ${OP_VER_BEFORE}, OPatch Module Updated."
                 else
                         echo "      => Already OPatch Version is ${OP_VER_BEFORE}, Skipped updating OPatch."
                 fi
